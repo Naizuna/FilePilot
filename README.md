@@ -40,8 +40,8 @@ pip install pymupdf python-docx
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/file-pilot.git
-cd file-pilot
+git clone https://github.com/YOUR-USERNAME/FilePilot.git
+cd FilePilot
 python -m venv .venv
 
 # Windows
