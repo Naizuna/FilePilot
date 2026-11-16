@@ -370,6 +370,7 @@ Examples:
   python -m organizer.main
   python -m organizer.main --source "D:/Messy" --config my_rules.json
   python -m organizer.main --interactive
+  python -m organizer.main --undo
         """,
     )
     parser.add_argument(
@@ -393,7 +394,74 @@ Examples:
         action="store_true",
         help="Prompt for unknown extensions and save to config",
     )
+    parser.add_argument(
+        "--undo",
+        action="store_true",
+        help="Undo the last organization run by reading organizer_log.txt",
+    )
     return parser.parse_args()
+
+
+def undo_organizer(log_file: Path, logger: logging.Logger, dry_run: bool = False) -> tuple[int, int]:
+    """Undo moves by reading the log file. Returns (undone_count, failed_count)."""
+    if not log_file.exists():
+        logger.error(f"Log file not found: {log_file}")
+        return 0, 0
+
+    undone = 0
+    failed = 0
+
+    with log_file.open("r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    # Parse log entries in reverse order (most recent first)
+    # Log format: "2026-11-16 10:30:45,123 | Moved: source -> dest [Category]"
+    for line in reversed(lines):
+        line = line.strip()
+        if " | Moved: " not in line:
+            continue
+
+        try:
+            # Extract the move part: "Moved: source -> dest [Category]"
+            move_part = line.split(" | Moved: ")[1]
+            # Parse: "source -> dest [Category]"
+            if " -> " not in move_part:
+                continue
+            source_str, rest = move_part.split(" -> ", 1)
+            dest_str = rest.split(" [")[0]
+
+            source_path = Path(source_str.strip())
+            dest_path = Path(dest_str.strip())
+
+            if not dest_path.exists():
+                logger.warning(f"Destination file no longer exists: {dest_path}")
+                failed += 1
+                continue
+
+            if not dry_run:
+                # Ensure source directory exists
+                source_path.parent.mkdir(parents=True, exist_ok=True)
+
+                # Handle collision at source
+                final_source = get_unique_destination(source_path.parent, source_path.name)
+
+                try:
+                    shutil.move(str(dest_path), str(final_source))
+                    logger.info(f"Undid: {dest_path} -> {final_source}")
+                except (PermissionError, OSError) as e:
+                    logger.error(f"Failed to undo {dest_path}: {e}")
+                    failed += 1
+                    continue
+            else:
+                logger.info(f"Would undo: {dest_path} -> {source_path}")
+
+            undone += 1
+
+        except (IndexError, ValueError) as e:
+            logger.debug(f"Failed to parse log line: {line}")
+            continue
+
+    return undone, failed
 
 
 def main() -> int:
@@ -403,15 +471,28 @@ def main() -> int:
     config_path = Path(args.config).expanduser().resolve()
     config = load_config(config_path)
 
+    # Setup logging
+    log_file = Path("organizer_log.txt").resolve()
+    logger = setup_logging(log_file)
+
+    # Handle undo command
+    if args.undo:
+        logger.info("=== File Organizer UNDO ===")
+        logger.info(f"Reading log: {log_file}")
+        if args.dry_run:
+            logger.info("DRY RUN: No files will be moved")
+
+        undone, failed = undo_organizer(log_file, logger, args.dry_run)
+        logger.info(f"Done. Undone: {undone}, Failed: {failed}")
+        if args.dry_run:
+            logger.info("This was a dry run. Run without --dry-run to execute undo.")
+        return 0
+
     # Determine source folder
     if args.source:
         source = expand_path(args.source)
     else:
         source = expand_path(config.get("source_folder", "~/Downloads"))
-
-    # Setup logging
-    log_file = Path("organizer_log.txt").resolve()
-    logger = setup_logging(log_file)
 
     mode = "DRY RUN" if args.dry_run else "LIVE RUN"
     logger.info(f"=== File Organizer {mode} ===")

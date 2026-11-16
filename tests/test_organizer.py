@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
 from pathlib import Path
 from unittest.mock import patch, MagicMock
@@ -23,6 +24,7 @@ from main import (
     run_organizer,
     save_config,
     should_skip,
+    undo_organizer,
 )
 
 
@@ -576,6 +578,118 @@ class TestRunOrganizer:
         assert (dest / "known.pdf").exists()
         assert (dest / "unknown.xyz").exists()
         assert ".xyz" in config["categories"]["Documents"]["extensions"]
+
+
+class TestUndoOrganizer:
+    def test_undo_single_move(self, tmp_path: Path):
+        """Test undoing a single move."""
+        source = tmp_path / "source"
+        source.mkdir()
+        dest = tmp_path / "dest"
+        dest.mkdir()
+
+        # Create a file and move it manually to simulate a previous run
+        test_file = source / "document.pdf"
+        test_file.write_text("content")
+
+        moved_file = dest / "document.pdf"
+        shutil.move(str(test_file), str(moved_file))
+
+        # Create log file
+        log_file = tmp_path / "organizer_log.txt"
+        log_file.write_text(
+            "2026-11-16 10:30:45,123 | Moved: "
+            f"{source / 'document.pdf'} -> {moved_file} [Documents]\n"
+        )
+
+        logger = type("MockLogger", (), {"info": lambda *a: None, "error": lambda *a: None, "warning": lambda *a: None})()
+
+        undone, failed = undo_organizer(log_file, logger, dry_run=False)
+        assert undone == 1
+        assert failed == 0
+        assert (source / "document.pdf").exists()
+        assert not moved_file.exists()
+
+    def test_undo_dry_run(self, tmp_path: Path):
+        """Test undo dry run doesn't move files."""
+        source = tmp_path / "source"
+        source.mkdir()
+        dest = tmp_path / "dest"
+        dest.mkdir()
+
+        moved_file = dest / "document.pdf"
+        moved_file.write_text("content")
+
+        log_file = tmp_path / "organizer_log.txt"
+        log_file.write_text(
+            "2026-11-16 10:30:45,123 | Moved: "
+            f"{source / 'document.pdf'} -> {moved_file} [Documents]\n"
+        )
+
+        logger = type("MockLogger", (), {"info": lambda *a: None, "error": lambda *a: None, "warning": lambda *a: None})()
+
+        undone, failed = undo_organizer(log_file, logger, dry_run=True)
+        assert undone == 1
+        assert failed == 0
+        assert moved_file.exists()  # File should still be there
+        assert not (source / "document.pdf").exists()
+
+    def test_undo_missing_log_file(self, tmp_path: Path):
+        """Test undo with missing log file."""
+        log_file = tmp_path / "nonexistent_log.txt"
+        logger = type("MockLogger", (), {"info": lambda *a: None, "error": lambda *a: None})()
+
+        undone, failed = undo_organizer(log_file, logger, dry_run=False)
+        assert undone == 0
+        assert failed == 0
+
+    def test_undo_multiple_moves(self, tmp_path: Path):
+        """Test undoing multiple moves in reverse order."""
+        source = tmp_path / "source"
+        source.mkdir()
+        dest1 = tmp_path / "dest1"
+        dest2 = tmp_path / "dest2"
+        dest1.mkdir()
+        dest2.mkdir()
+
+        file1 = dest1 / "photo.jpg"
+        file2 = dest2 / "doc.pdf"
+        file1.write_text("img")
+        file2.write_text("pdf")
+
+        log_file = tmp_path / "organizer_log.txt"
+        log_file.write_text(
+            f"2026-11-16 10:30:45,123 | Moved: {source / 'photo.jpg'} -> {file1} [Images]\n"
+            f"2026-11-16 10:30:46,456 | Moved: {source / 'doc.pdf'} -> {file2} [Documents]\n"
+        )
+
+        logger = type("MockLogger", (), {"info": lambda *a: None, "error": lambda *a: None, "warning": lambda *a: None})()
+
+        undone, failed = undo_organizer(log_file, logger, dry_run=False)
+        assert undone == 2
+        assert failed == 0
+        assert (source / "photo.jpg").exists()
+        assert (source / "doc.pdf").exists()
+        assert not file1.exists()
+        assert not file2.exists()
+
+    def test_undo_missing_destination_file(self, tmp_path: Path):
+        """Test undo when destination file was deleted."""
+        source = tmp_path / "source"
+        source.mkdir()
+        dest = tmp_path / "dest"
+        dest.mkdir()
+
+        log_file = tmp_path / "organizer_log.txt"
+        log_file.write_text(
+            f"2026-11-16 10:30:45,123 | Moved: {source / 'document.pdf'} -> {dest / 'document.pdf'} [Documents]\n"
+        )
+
+        logger = type("MockLogger", (), {"info": lambda *a: None, "error": lambda *a: None, "warning": lambda *a: None})()
+
+        undone, failed = undo_organizer(log_file, logger, dry_run=False)
+        assert undone == 0
+        assert failed == 1
 
 
 if __name__ == "__main__":

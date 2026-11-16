@@ -133,3 +133,17 @@
 2026-11-17 00:15:31,414 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\script.py -> C:\Users\Earl\Documents\Code\script (1).py [Code]
 2026-11-17 00:15:31,414 | Done. Moved: 6, Skipped/No-match: 1
 2026-11-17 00:15:31,414 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-17 00:26:33,828 | === File Organizer UNDO ===
+2026-11-17 00:26:33,829 | Reading log: C:\Python Projects\file-organizer\FilePilot\organizer_log.txt
+2026-11-17 00:26:33,829 | DRY RUN: No files will be moved
+2026-11-17 00:26:33,840 | Would undo: C:\Users\Earl\Documents\Code\script.py -> C:\Python Projects\file-organizer\FilePilot\test_messy\script.py
+2026-11-17 00:26:33,841 | Would undo: C:\Users\Earl\Pictures\Sorted\photo.jpg -> C:\Python Projects\file-organizer\FilePilot\test_messy\photo.jpg
+2026-11-17 00:26:33,842 | Would undo: C:\Users\Earl\Documents\Sorted\document.pdf -> C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf
+2026-11-17 00:26:33,842 | Done. Undone: 3, Failed: 0
+2026-11-17 00:26:33,842 | This was a dry run. Run without --dry-run to execute undo.
+2026-11-17 00:26:53,109 | === File Organizer UNDO ===
+2026-11-17 00:26:53,109 | Reading log: C:\Python Projects\file-organizer\FilePilot\organizer_log.txt
+2026-11-17 00:26:53,120 | Undid: C:\Users\Earl\Documents\Code\script.py -> C:\Python Projects\file-organizer\FilePilot\test_messy\script (1).py
+2026-11-17 00:26:53,121 | Undid: C:\Users\Earl\Pictures\Sorted\photo.jpg -> C:\Python Projects\file-organizer\FilePilot\test_messy\photo (1).jpg
+2026-11-17 00:26:53,122 | Undid: C:\Users\Earl\Documents\Sorted\document.pdf -> C:\Python Projects\file-organizer\FilePilot\test_messy\document (1).pdf
+2026-11-17 00:26:53,123 | Done. Undone: 3, Failed: 0
