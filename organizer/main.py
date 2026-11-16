@@ -14,6 +14,28 @@ from pathlib import Path
 from typing import Any
 
 
+def get_resource_path(relative_path: str) -> Path:
+    """Get path to resource, works for dev, tests, and PyInstaller frozen app."""
+    if hasattr(sys, '_MEIPASS'):
+        # Running in PyInstaller bundle
+        return Path(sys._MEIPASS) / relative_path
+    # Running in development or tests - check multiple locations
+    # 1. Current working directory (where config.example.json usually is)
+    cwd_path = Path.cwd() / relative_path
+    if cwd_path.exists():
+        return cwd_path
+    # 2. Parent of this file (organizer/ directory)
+    file_parent = Path(__file__).parent / relative_path
+    if file_parent.exists():
+        return file_parent
+    # 3. Grandparent (project root)
+    grandparent = Path(__file__).parent.parent / relative_path
+    if grandparent.exists():
+        return grandparent
+    # Fallback: return path relative to this file (for error messages)
+    return Path(__file__).parent / relative_path
+
+
 def setup_logging(log_file: Path) -> logging.Logger:
     """Configure logging to file and stdout."""
     logger = logging.getLogger("organizer")
@@ -35,7 +57,7 @@ def setup_logging(log_file: Path) -> logging.Logger:
 
 def load_default_config() -> dict[str, Any]:
     """Load default config from config.example.json."""
-    example_path = Path("config.example.json")
+    example_path = get_resource_path("config.example.json")
     if example_path.exists():
         try:
             with example_path.open("r", encoding="utf-8") as f:
@@ -790,6 +812,9 @@ def run_gui() -> int:
             self.dry_run_var = tk.BooleanVar(value=True)
             self.interactive_var = tk.BooleanVar(value=False)
             self.undo_var = tk.BooleanVar(value=False)
+            self.ai_var = tk.BooleanVar(value=False)
+            self._running = False
+            self._run_button = None
 
             self.build_ui()
 
@@ -822,11 +847,13 @@ def run_gui() -> int:
             ttk.Checkbutton(options_frame, text="Dry Run (preview only)", variable=self.dry_run_var).pack(anchor=tk.W, pady=2)
             ttk.Checkbutton(options_frame, text="Interactive (prompt for unknown extensions)", variable=self.interactive_var).pack(anchor=tk.W, pady=2)
             ttk.Checkbutton(options_frame, text="Undo last run", variable=self.undo_var, command=self.toggle_undo).pack(anchor=tk.W, pady=2)
+            ttk.Checkbutton(options_frame, text="AI Categorization (requires config)", variable=self.ai_var).pack(anchor=tk.W, pady=2)
 
             # Run button
             button_frame = ttk.Frame(main_frame)
             button_frame.grid(row=3, column=0, columnspan=2, pady=10)
-            ttk.Button(button_frame, text="Run Organizer", command=self.run_organizer, style="Accent.TButton").pack(side=tk.LEFT, padx=5)
+            self._run_button = ttk.Button(button_frame, text="Run Organizer", command=self.run_organizer, style="Accent.TButton")
+            self._run_button.pack(side=tk.LEFT, padx=5)
             ttk.Button(button_frame, text="View Log", command=self.view_log).pack(side=tk.LEFT, padx=5)
             ttk.Button(button_frame, text="Open Config", command=self.open_config).pack(side=tk.LEFT, padx=5)
 
@@ -869,12 +896,16 @@ def run_gui() -> int:
             self.log_text.config(state=tk.DISABLED)
 
         def run_organizer(self):
+            if self._running:
+                return
             if self.undo_var.get():
                 self.run_undo()
             else:
                 self.run_normal()
 
         def run_normal(self):
+            if self._running:
+                return
             source = self.source_var.get().strip()
             if not source:
                 messagebox.showerror("Error", "Please select a source folder")
@@ -885,6 +916,8 @@ def run_gui() -> int:
                 messagebox.showerror("Error", "Please select a config file")
                 return
 
+            self._running = True
+            self._run_button.config(state=tk.DISABLED)
             self.status_var.set("Running...")
             self.log(f"=== File Organizer {'DRY RUN' if self.dry_run_var.get() else 'LIVE RUN'} ===")
             self.log(f"Source: {source}")
@@ -925,7 +958,8 @@ def run_gui() -> int:
                     source_path, cfg, logger,
                     self.dry_run_var.get(),
                     self.interactive_var.get(),
-                    config_path
+                    config_path,
+                    self.ai_var.get()
                 )
 
                 self.root.after(0, lambda: self._run_complete(moved, skipped))
@@ -933,12 +967,16 @@ def run_gui() -> int:
                 self.root.after(0, lambda: self._run_error(str(e)))
 
         def _run_complete(self, moved, skipped):
+            self._running = False
+            self._run_button.config(state=tk.NORMAL)
             self.status_var.set("Done")
             self.log(f"Done. Moved: {moved}, Skipped/No-match: {skipped}")
             if self.dry_run_var.get():
                 self.log("This was a dry run. No files were moved. Uncheck 'Dry Run' to execute.")
 
         def _run_error(self, error):
+            self._running = False
+            self._run_button.config(state=tk.NORMAL)
             self.status_var.set("Error")
             self.log(f"ERROR: {error}")
             messagebox.showerror("Error", error)
@@ -1033,6 +1071,10 @@ def run_gui() -> int:
 
 def main() -> int:
     """Main entry point."""
+    # Auto-launch GUI when frozen (double-clicked) with no args
+    if hasattr(sys, '_MEIPASS') and len(sys.argv) == 1:
+        return run_gui()
+
     args = parse_args()
 
     # Handle GUI command
@@ -1086,4 +1128,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # Required for PyInstaller --windowed on Windows
+    import multiprocessing
+    multiprocessing.freeze_support()
     sys.exit(main())

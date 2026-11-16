@@ -1,0 +1,116 @@
+2026-11-17 02:03:13,735 | === File Organizer LIVE RUN ===
+2026-11-17 02:03:13,735 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:03:13,735 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:03:13,817 | Done. Moved: 0, Skipped/No-match: 273
+2026-11-17 02:03:54,231 | === File Organizer LIVE RUN ===
+2026-11-17 02:03:54,231 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:03:54,231 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:03:54,242 | Done. Moved: 0, Skipped/No-match: 273
+2026-11-17 02:03:58,325 | === File Organizer LIVE RUN ===
+2026-11-17 02:03:58,325 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:03:58,325 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:03:58,333 | Done. Moved: 0, Skipped/No-match: 273
+2026-11-17 02:05:28,394 | === File Organizer LIVE RUN ===
+2026-11-17 02:05:28,394 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:05:28,394 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:05:28,403 | Done. Moved: 0, Skipped/No-match: 273
+2026-11-17 02:05:30,487 | === File Organizer LIVE RUN ===
+2026-11-17 02:05:30,487 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:05:30,488 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:05:30,498 | Done. Moved: 0, Skipped/No-match: 273
+2026-11-17 02:27:47,502 | === File Organizer LIVE RUN ===
+2026-11-17 02:27:47,503 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:27:47,503 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:27:47,504 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:27:48,697 | === File Organizer LIVE RUN ===
+2026-11-17 02:27:48,697 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:27:48,697 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:27:48,698 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:27:50,815 | === File Organizer LIVE RUN ===
+2026-11-17 02:27:50,815 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:27:50,815 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:27:50,817 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:27:52,090 | === File Organizer LIVE RUN ===
+2026-11-17 02:27:52,090 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:27:52,091 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:27:52,093 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:27:52,273 | === File Organizer LIVE RUN ===
+2026-11-17 02:27:52,273 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:27:52,273 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:27:52,274 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:30:47,534 | === File Organizer LIVE RUN ===
+2026-11-17 02:30:47,534 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:30:47,534 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:30:47,536 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:31:14,136 | === File Organizer LIVE RUN ===
+2026-11-17 02:31:14,136 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:31:14,136 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:31:14,137 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:35:09,991 | === File Organizer LIVE RUN ===
+2026-11-17 02:35:09,992 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:35:09,992 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:35:09,993 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:35:11,183 | === File Organizer LIVE RUN ===
+2026-11-17 02:35:11,184 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:35:11,184 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:35:11,185 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:35:13,362 | === File Organizer LIVE RUN ===
+2026-11-17 02:35:13,362 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:35:13,362 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:35:13,364 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:35:13,541 | === File Organizer LIVE RUN ===
+2026-11-17 02:35:13,541 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:35:13,541 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:35:13,543 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:36:49,944 | === File Organizer LIVE RUN ===
+2026-11-17 02:36:49,945 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:36:49,945 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:36:49,948 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:50:18,007 | === File Organizer LIVE RUN ===
+2026-11-17 02:50:18,007 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:50:18,007 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:50:18,011 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:50:20,741 | === File Organizer LIVE RUN ===
+2026-11-17 02:50:20,741 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:50:20,741 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:50:20,743 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:50:21,596 | === File Organizer LIVE RUN ===
+2026-11-17 02:50:21,596 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:50:21,596 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:50:21,597 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:50:27,911 | === File Organizer LIVE RUN ===
+2026-11-17 02:50:27,911 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:50:27,911 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:50:27,913 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:50:42,073 | === File Organizer LIVE RUN ===
+2026-11-17 02:50:42,073 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:50:42,073 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:50:42,075 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:50:43,398 | === File Organizer LIVE RUN ===
+2026-11-17 02:50:43,398 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:50:43,398 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:50:43,400 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:52:53,289 | === File Organizer LIVE RUN ===
+2026-11-17 02:52:53,289 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:52:53,289 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:52:53,291 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:52:55,016 | === File Organizer LIVE RUN ===
+2026-11-17 02:52:55,016 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:52:55,016 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:52:55,017 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:52:55,872 | === File Organizer LIVE RUN ===
+2026-11-17 02:52:55,872 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:52:55,872 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:52:55,873 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:52:57,465 | === File Organizer LIVE RUN ===
+2026-11-17 02:52:57,465 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:52:57,466 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:52:57,467 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:54:11,535 | === File Organizer LIVE RUN ===
+2026-11-17 02:54:11,535 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:54:11,535 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:54:11,537 | Done. Moved: 0, Skipped/No-match: 29
+2026-11-17 02:54:45,215 | === File Organizer LIVE RUN ===
+2026-11-17 02:54:45,216 | Source: C:\Users\Earl\Downloads
+2026-11-17 02:54:45,216 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
+2026-11-17 02:54:45,217 | Done. Moved: 0, Skipped/No-match: 29
