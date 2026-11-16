@@ -18,6 +18,7 @@ from main import (
     expand_path,
     get_unique_destination,
     load_config,
+    match_keyword_rules,
     organize_file,
     run_organizer,
     save_config,
@@ -148,6 +149,64 @@ class TestGetUniqueDestination:
         (tmp_path / "file (1).txt").write_text("2")
         dest = get_unique_destination(tmp_path, "file.txt")
         assert dest == tmp_path / "file (2).txt"
+
+
+class TestMatchKeywordRules:
+    def test_keyword_match(self, tmp_path: Path):
+        categories = {
+            "Finance": {"extensions": [], "destination": str(tmp_path / "Finance")},
+            "Documents": {"extensions": [".pdf"], "destination": str(tmp_path / "Documents")},
+        }
+        keyword_rules = {
+            "invoice": "Finance",
+            "receipt": "Finance",
+            "lecture": "Documents",
+        }
+
+        result = match_keyword_rules("invoice_jan.pdf", keyword_rules, categories)
+        assert result is not None
+        assert result[0] == "Finance"
+        assert "Finance" in str(result[1])
+
+    def test_keyword_case_insensitive(self, tmp_path: Path):
+        categories = {"Finance": {"extensions": [], "destination": str(tmp_path / "Finance")}}
+        keyword_rules = {"invoice": "Finance"}
+
+        result = match_keyword_rules("INVOICE_2024.pdf", keyword_rules, categories)
+        assert result is not None
+        assert result[0] == "Finance"
+
+        result = match_keyword_rules("Invoice_March.pdf", keyword_rules, categories)
+        assert result is not None
+        assert result[0] == "Finance"
+
+    def test_keyword_no_match(self, tmp_path: Path):
+        categories = {"Finance": {"extensions": [], "destination": str(tmp_path / "Finance")}}
+        keyword_rules = {"invoice": "Finance"}
+
+        result = match_keyword_rules("document.pdf", keyword_rules, categories)
+        assert result is None
+
+    def test_keyword_priority_over_extension(self, tmp_path: Path):
+        """Keyword rules should be checked before extension."""
+        categories = {
+            "Finance": {"extensions": [], "destination": str(tmp_path / "Finance")},
+            "Documents": {"extensions": [".pdf"], "destination": str(tmp_path / "Documents")},
+        }
+        keyword_rules = {"invoice": "Finance"}
+
+        # invoice.pdf should go to Finance (keyword) not Documents (extension)
+        result = match_keyword_rules("invoice.pdf", keyword_rules, categories)
+        assert result is not None
+        assert result[0] == "Finance"
+
+    def test_keyword_unknown_category(self, tmp_path: Path):
+        """Keyword pointing to non-existent category should return None."""
+        categories = {"Documents": {"extensions": [".pdf"], "destination": str(tmp_path / "Documents")}}
+        keyword_rules = {"invoice": "Finance"}  # Finance doesn't exist
+
+        result = match_keyword_rules("invoice.pdf", keyword_rules, categories)
+        assert result is None
 
 
 class TestOrganizeFile:
@@ -313,6 +372,68 @@ class TestOrganizeFile:
         assert "_skip_extensions" in categories
         assert ".xyz" in categories["_skip_extensions"]
 
+    def test_keyword_rule_takes_priority(self, tmp_path: Path):
+        """Test that keyword rules take priority over extension rules."""
+        source = tmp_path / "source"
+        source.mkdir()
+        dest_finance = tmp_path / "dest" / "Finance"
+        dest_doc = tmp_path / "dest" / "Documents"
+        dest_finance.mkdir(parents=True)
+        dest_doc.mkdir(parents=True)
+
+        test_file = source / "invoice_report.pdf"
+        test_file.write_text("pdf content")
+
+        categories = {
+            "Finance": {"extensions": [], "destination": str(dest_finance)},
+            "Documents": {"extensions": [".pdf"], "destination": str(dest_doc)},
+        }
+        keyword_rules = {"invoice": "Finance"}
+        config_path = tmp_path / "config.json"
+
+        ext_map = {".pdf": ("Documents", dest_doc)}
+        logger = type("MockLogger", (), {"info": lambda *a: None, "error": lambda *a: None})()
+
+        result = organize_file(
+            test_file, ext_map, logger, dry_run=False,
+            interactive=False, categories=categories, config_path=config_path,
+            keyword_rules=keyword_rules
+        )
+
+        assert result is True
+        assert not test_file.exists()
+        assert (dest_finance / "invoice_report.pdf").exists()
+        assert not (dest_doc / "invoice_report.pdf").exists()
+
+    def test_keyword_case_insensitive(self, tmp_path: Path):
+        """Test keyword matching is case insensitive."""
+        source = tmp_path / "source"
+        source.mkdir()
+        dest_finance = tmp_path / "dest" / "Finance"
+        dest_finance.mkdir(parents=True)
+
+        test_file = source / "INVOICE_Q1.pdf"
+        test_file.write_text("pdf content")
+
+        categories = {
+            "Finance": {"extensions": [], "destination": str(dest_finance)},
+            "Documents": {"extensions": [".pdf"], "destination": str(tmp_path / "dest" / "Documents")},
+        }
+        keyword_rules = {"invoice": "Finance"}
+        config_path = tmp_path / "config.json"
+
+        ext_map = {".pdf": ("Documents", tmp_path / "dest" / "Documents")}
+        logger = type("MockLogger", (), {"info": lambda *a: None, "error": lambda *a: None})()
+
+        result = organize_file(
+            test_file, ext_map, logger, dry_run=False,
+            interactive=False, categories=categories, config_path=config_path,
+            keyword_rules=keyword_rules
+        )
+
+        assert result is True
+        assert (dest_finance / "INVOICE_Q1.pdf").exists()
+
 
 class TestRunOrganizer:
     def test_organizes_multiple_files(self, tmp_path: Path):
@@ -391,6 +512,36 @@ class TestRunOrganizer:
         moved, skipped = run_organizer(tmp_path / "nonexistent", config, logger, dry_run=False)
         assert moved == 0
         assert skipped == 0
+
+    def test_keyword_rules_in_run_organizer(self, tmp_path: Path):
+        """Test run_organizer applies keyword rules."""
+        source = tmp_path / "source"
+        source.mkdir()
+        dest_finance = tmp_path / "dest" / "Finance"
+        dest_doc = tmp_path / "dest" / "Documents"
+        dest_finance.mkdir(parents=True)
+        dest_doc.mkdir(parents=True)
+
+        (source / "invoice_jan.pdf").write_text("pdf")
+        (source / "report.pdf").write_text("pdf")
+
+        config = {
+            "categories": {
+                "Finance": {"extensions": [], "destination": str(dest_finance)},
+                "Documents": {"extensions": [".pdf"], "destination": str(dest_doc)},
+            },
+            "keyword_rules": {"invoice": "Finance"},
+            "skip_extensions": [],
+            "skip_folders": True,
+        }
+
+        logger = type("MockLogger", (), {"info": lambda *a: None, "error": lambda *a: None})()
+
+        moved, skipped = run_organizer(source, config, logger, dry_run=False)
+        assert moved == 2
+        assert skipped == 0
+        assert (dest_finance / "invoice_jan.pdf").exists()
+        assert (dest_doc / "report.pdf").exists()
 
     def test_interactive_mode_processes_unknown_extensions(self, tmp_path: Path):
         """Test run_organizer in interactive mode with unknown extensions."""

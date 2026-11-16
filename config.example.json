@@ -32,7 +32,25 @@
     "Executables": {
       "extensions": [".exe", ".msi", ".dmg", ".app", ".apk"],
       "destination": "~/Documents/Installers"
+    },
+    "Finance": {
+      "extensions": [],
+      "destination": "~/Documents/Finance"
     }
+  },
+  "keyword_rules": {
+    "invoice": "Finance",
+    "receipt": "Finance",
+    "bill": "Finance",
+    "statement": "Finance",
+    "lecture": "Documents",
+    "homework": "Documents",
+    "assignment": "Documents",
+    "screenshot": "Images",
+    "photo": "Images",
+    "video": "Videos",
+    "music": "Audio",
+    "song": "Audio"
   },
   "skip_extensions": [".crdownload", ".part", ".tmp", ".download"],
   "skip_folders": true

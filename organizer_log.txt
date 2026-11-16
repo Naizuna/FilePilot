@@ -122,3 +122,14 @@
 2026-11-17 00:05:37,714 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\unknown.xyz -> C:\Users\Earl\unknown.xyz [Unknown]
 2026-11-17 00:05:37,715 | Done. Moved: 4, Skipped/No-match: 0
 2026-11-17 00:05:37,715 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-17 00:15:31,409 | === File Organizer DRY RUN ===
+2026-11-17 00:15:31,409 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-17 00:15:31,409 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-17 00:15:31,411 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf -> C:\Users\Earl\Documents\Sorted\document (1).pdf [Documents]
+2026-11-17 00:15:31,412 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\invoice_jan.pdf -> C:\Users\Earl\Documents\Finance\invoice_jan.pdf [Finance]
+2026-11-17 00:15:31,412 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\photo.jpg -> C:\Users\Earl\Pictures\Sorted\photo (1).jpg [Images]
+2026-11-17 00:15:31,413 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\receipt_feb.pdf -> C:\Users\Earl\Documents\Finance\receipt_feb.pdf [Finance]
+2026-11-17 00:15:31,413 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\report.pdf -> C:\Users\Earl\Documents\Sorted\report.pdf [Documents]
+2026-11-17 00:15:31,414 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\script.py -> C:\Users\Earl\Documents\Code\script (1).py [Code]
+2026-11-17 00:15:31,414 | Done. Moved: 6, Skipped/No-match: 1
+2026-11-17 00:15:31,414 | This was a dry run. No files were moved. Run without --dry-run to execute.

@@ -40,7 +40,7 @@ def load_default_config() -> dict[str, Any]:
                 return json.load(f)
         except (json.JSONDecodeError, OSError):
             pass
-    return {"categories": {}, "skip_extensions": [], "skip_folders": True}
+    return {"categories": {}, "keyword_rules": {}, "skip_extensions": [], "skip_folders": True}
 
 
 def load_config(config_path: Path) -> dict[str, Any]:
@@ -59,6 +59,8 @@ def load_config(config_path: Path) -> dict[str, Any]:
         # Merge: user categories extend defaults, user skip_extensions extend defaults
         if "categories" in user_config:
             config["categories"] = {**config.get("categories", {}), **user_config["categories"]}
+        if "keyword_rules" in user_config:
+            config["keyword_rules"] = {**config.get("keyword_rules", {}), **user_config["keyword_rules"]}
         if "skip_extensions" in user_config:
             # Combine, avoiding duplicates
             default_skips = set(config.get("skip_extensions", []))
@@ -104,6 +106,20 @@ def should_skip(file_path: Path, skip_extensions: list[str], skip_folders: bool)
     if file_path.suffix.lower() in [ext.lower() for ext in skip_extensions]:
         return True
     return False
+
+
+def match_keyword_rules(filename: str, keyword_rules: dict[str, str], categories: dict[str, Any]) -> tuple[str, Path] | None:
+    """Check if filename matches any keyword rule. Returns (category, destination) or None.
+
+    keyword_rules format: {"invoice": "Finance", "receipt": "Finance", "lecture": "School"}
+    """
+    filename_lower = filename.lower()
+    for keyword, category in keyword_rules.items():
+        if keyword.lower() in filename_lower:
+            if category in categories:
+                dest = expand_path(categories[category]["destination"])
+                return category, dest
+    return None
 
 
 def get_unique_destination(dest_dir: Path, filename: str) -> Path:
@@ -237,6 +253,7 @@ def organize_file(
     interactive: bool = False,
     categories: dict[str, Any] | None = None,
     config_path: Path | None = None,
+    keyword_rules: dict[str, str] | None = None,
 ) -> bool:
     """Move a single file to its category folder. Returns True if moved."""
     ext = file_path.suffix.lower()
@@ -246,19 +263,39 @@ def organize_file(
         logger.debug(f"Skipping file without extension: {file_path.name}")
         return False
 
-    if ext not in ext_map:
-        if interactive and categories is not None and config_path is not None:
-            # Prompt user for category
-            result = prompt_for_category(ext, categories, config_path, logger)
-            if result is None:
-                return False  # User chose to skip
-            cat_name, dest_dir = result
-            # Rebuild ext_map with new extension
-            ext_map[ext] = (cat_name, dest_dir)
+    # Check keyword rules first (higher priority than extension)
+    if keyword_rules and categories:
+        keyword_match = match_keyword_rules(file_path.name, keyword_rules, categories)
+        if keyword_match:
+            category, dest_dir = keyword_match
         else:
-            return False
-
-    category, dest_dir = ext_map[ext]
+            # Fall back to extension matching
+            if ext not in ext_map:
+                if interactive and categories is not None and config_path is not None:
+                    # Prompt user for category
+                    result = prompt_for_category(ext, categories, config_path, logger)
+                    if result is None:
+                        return False  # User chose to skip
+                    cat_name, dest_dir = result
+                    # Rebuild ext_map with new extension
+                    ext_map[ext] = (cat_name, dest_dir)
+                else:
+                    return False
+            category, dest_dir = ext_map[ext]
+    else:
+        # No keyword rules, use extension matching
+        if ext not in ext_map:
+            if interactive and categories is not None and config_path is not None:
+                # Prompt user for category
+                result = prompt_for_category(ext, categories, config_path, logger)
+                if result is None:
+                    return False  # User chose to skip
+                cat_name, dest_dir = result
+                # Rebuild ext_map with new extension
+                ext_map[ext] = (cat_name, dest_dir)
+            else:
+                return False
+        category, dest_dir = ext_map[ext]
 
     # Ensure destination directory exists
     if not dry_run:
@@ -289,6 +326,7 @@ def run_organizer(
 ) -> tuple[int, int]:
     """Organize files in source folder according to config. Returns (moved_count, skipped_count)."""
     categories = config.get("categories", {})
+    keyword_rules = config.get("keyword_rules", {})
     skip_extensions = config.get("skip_extensions", [])
     skip_folders = config.get("skip_folders", True)
 
@@ -312,7 +350,7 @@ def run_organizer(
 
         if organize_file(
             file_path, ext_map, logger, dry_run,
-            interactive, categories, config_path
+            interactive, categories, config_path, keyword_rules
         ):
             moved += 1
         else:
