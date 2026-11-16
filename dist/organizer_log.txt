@@ -1,6 +1,0 @@
-2026-11-17 04:04:15,961 | === File Organizer LIVE RUN ===
-2026-11-17 04:04:15,961 | Source: C:\Users\Earl\Downloads
-2026-11-17 04:04:15,961 | Config: C:\Python Projects\file-organizer\FilePilot\dist\config.json
-2026-11-17 04:04:15,964 | Moved: C:\Users\Earl\Downloads\5E_CharacterSheet_Fillable.pdf -> C:\Users\Earl\Documents\Sorted\5E_CharacterSheet_Fillable.pdf [Documents]
-2026-11-17 04:04:15,978 | Moved: C:\Users\Earl\Downloads\Gemini_Generated_Image_yb9h3yb9h3yb9h3y.jpg -> C:\Users\Earl\Pictures\Sorted\Gemini_Generated_Image_yb9h3yb9h3yb9h3y.jpg [Images]
-2026-11-17 04:04:15,981 | Done. Moved: 2, Skipped/No-match: 29
