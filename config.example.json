@@ -1,0 +1,39 @@
+{
+  "source_folder": "~/Downloads",
+  "categories": {
+    "Images": {
+      "extensions": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg", ".heic"],
+      "destination": "~/Pictures/Sorted"
+    },
+    "Documents": {
+      "extensions": [".pdf", ".docx", ".doc", ".txt", ".md", ".rtf", ".odt"],
+      "destination": "~/Documents/Sorted"
+    },
+    "Spreadsheets": {
+      "extensions": [".xlsx", ".xls", ".csv", ".ods"],
+      "destination": "~/Documents/Spreadsheets"
+    },
+    "Videos": {
+      "extensions": [".mp4", ".mov", ".avi", ".mkv", ".webm", ".flv"],
+      "destination": "~/Videos/Sorted"
+    },
+    "Audio": {
+      "extensions": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"],
+      "destination": "~/Music/Sorted"
+    },
+    "Archives": {
+      "extensions": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2"],
+      "destination": "~/Documents/Archives"
+    },
+    "Code": {
+      "extensions": [".py", ".js", ".ts", ".html", ".css", ".json", ".xml", ".yaml", ".yml", ".sh", ".bat", ".ps1"],
+      "destination": "~/Documents/Code"
+    },
+    "Executables": {
+      "extensions": [".exe", ".msi", ".dmg", ".app", ".apk"],
+      "destination": "~/Documents/Installers"
+    }
+  },
+  "skip_extensions": [".crdownload", ".part", ".tmp", ".download"],
+  "skip_folders": true
+}

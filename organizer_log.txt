@@ -1,0 +1,124 @@
+2026-11-14 22:16:08,068 | === File Organizer DRY RUN ===
+2026-11-14 22:16:08,069 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-14 22:16:08,069 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-14 22:16:08,071 | Source folder does not exist: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-14 22:16:08,071 | Done. Moved: 0, Skipped/No-match: 0
+2026-11-14 22:16:08,071 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-15 00:59:57,075 | === File Organizer DRY RUN ===
+2026-11-15 00:59:57,075 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-15 00:59:57,075 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-15 00:59:57,078 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf -> C:\Users\Earl\Documents\Sorted\document.pdf [Documents]
+2026-11-15 00:59:57,078 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\photo.jpg -> C:\Users\Earl\Pictures\Sorted\photo.jpg [Images]
+2026-11-15 00:59:57,079 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\script.py -> C:\Users\Earl\Documents\Code\script.py [Code]
+2026-11-15 00:59:57,079 | Done. Moved: 3, Skipped/No-match: 0
+2026-11-15 00:59:57,079 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-16 22:29:45,364 | === File Organizer LIVE RUN ===
+2026-11-16 22:29:45,364 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-16 22:29:45,365 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 22:29:45,368 | Moved: C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf -> C:\Users\Earl\Documents\Sorted\document.pdf [Documents]
+2026-11-16 22:29:45,370 | Moved: C:\Python Projects\file-organizer\FilePilot\test_messy\photo.jpg -> C:\Users\Earl\Pictures\Sorted\photo.jpg [Images]
+2026-11-16 22:29:45,371 | Moved: C:\Python Projects\file-organizer\FilePilot\test_messy\script.py -> C:\Users\Earl\Documents\Code\script.py [Code]
+2026-11-16 22:29:45,371 | Done. Moved: 3, Skipped/No-match: 0
+2026-11-16 23:42:40,538 | === File Organizer LIVE RUN ===
+2026-11-16 23:42:40,539 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-16 23:42:40,539 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 23:42:40,539 | Interactive mode: ON
+2026-11-16 23:42:40,543 | Done. Moved: 0, Skipped/No-match: 0
+2026-11-16 23:43:00,606 | === File Organizer DRY RUN ===
+2026-11-16 23:43:00,607 | Source: C:\Python Projects\file-organizer\FilePilot
+2026-11-16 23:43:00,607 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 23:43:00,607 | Interactive mode: ON
+2026-11-16 23:45:01,178 | Created new category 'Unknown' with extension  -> C:\Users\Earl
+2026-11-16 23:45:01,178 | Would move: C:\Python Projects\file-organizer\FilePilot\.gitattributes -> C:\Users\Earl\.gitattributes [Unknown]
+2026-11-16 23:45:01,180 | Would move: C:\Python Projects\file-organizer\FilePilot\CLAUDE.md -> C:\Users\Earl\Documents\Sorted\CLAUDE.md [Documents]
+2026-11-16 23:45:01,180 | Would move: C:\Python Projects\file-organizer\FilePilot\config.example.json -> C:\Users\Earl\Documents\Code\config.example.json [Code]
+2026-11-16 23:45:01,181 | Would move: C:\Python Projects\file-organizer\FilePilot\config.json -> C:\Users\Earl\Documents\Code\config.json [Code]
+2026-11-16 23:45:01,181 | Would move: C:\Python Projects\file-organizer\FilePilot\organizer_log.txt -> C:\Users\Earl\Documents\Sorted\organizer_log.txt [Documents]
+2026-11-16 23:45:01,182 | Would move: C:\Python Projects\file-organizer\FilePilot\README.md -> C:\Users\Earl\Documents\Sorted\README.md [Documents]
+2026-11-16 23:45:01,182 | Would move: C:\Python Projects\file-organizer\FilePilot\requirements.txt -> C:\Users\Earl\Documents\Sorted\requirements.txt [Documents]
+2026-11-16 23:45:01,182 | Done. Moved: 7, Skipped/No-match: 6
+2026-11-16 23:45:01,182 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-16 23:47:42,269 | === File Organizer DRY RUN ===
+2026-11-16 23:47:42,270 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-16 23:47:42,270 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 23:47:42,270 | Interactive mode: ON
+2026-11-16 23:47:55,468 | Created new category 'Unknown' with extension .pdf -> C:\Users\Earl
+2026-11-16 23:47:55,468 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf -> C:\Users\Earl\document.pdf [Unknown]
+2026-11-16 23:48:31,285 | Added .jpg to skip list
+2026-11-16 23:50:58,254 | === File Organizer DRY RUN ===
+2026-11-16 23:50:58,255 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-16 23:50:58,255 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 23:50:58,255 | Interactive mode: ON
+2026-11-16 23:51:07,226 | Created new category 'PDF' with extension .pdf -> C:\Users\Earl
+2026-11-16 23:51:07,226 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf -> C:\Users\Earl\document.pdf [PDF]
+2026-11-16 23:51:16,071 | Created new category 'JPG' with extension .jpg -> C:\Users\Earl
+2026-11-16 23:51:16,071 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\photo.jpg -> C:\Users\Earl\photo.jpg [JPG]
+2026-11-16 23:51:27,285 | Created new category 'Scripts' with extension .py -> C:\Users\Earl
+2026-11-16 23:51:27,285 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\script.py -> C:\Users\Earl\script.py [Scripts]
+2026-11-16 23:51:34,423 | Created new category 'Unknown' with extension .xyz -> C:\Users\Earl
+2026-11-16 23:51:34,424 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\unknown.xyz -> C:\Users\Earl\unknown.xyz [Unknown]
+2026-11-16 23:51:34,424 | Done. Moved: 4, Skipped/No-match: 0
+2026-11-16 23:51:34,424 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-16 23:53:30,214 | === File Organizer DRY RUN ===
+2026-11-16 23:53:30,214 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-16 23:53:30,214 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 23:53:30,214 | Interactive mode: ON
+2026-11-16 23:53:30,217 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf -> C:\Users\Earl\Documents\Sorted\document (1).pdf [Documents]
+2026-11-16 23:53:30,217 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\photo.jpg -> C:\Users\Earl\Pictures\Sorted\photo (1).jpg [Images]
+2026-11-16 23:53:30,218 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\script.py -> C:\Users\Earl\Documents\Code\script (1).py [Code]
+2026-11-16 23:53:41,840 | Created new category 'Unknown' with extension .xyz -> C:\Users\Earl
+2026-11-16 23:53:41,840 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\unknown.xyz -> C:\Users\Earl\unknown.xyz [Unknown]
+2026-11-16 23:53:41,840 | Done. Moved: 4, Skipped/No-match: 0
+2026-11-16 23:53:41,840 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-16 23:57:22,018 | === File Organizer DRY RUN ===
+2026-11-16 23:57:22,018 | Source: C:\path\to\folder
+2026-11-16 23:57:22,018 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 23:57:22,018 | Interactive mode: ON
+2026-11-16 23:57:22,018 | Source folder does not exist: C:\path\to\folder
+2026-11-16 23:57:22,018 | Done. Moved: 0, Skipped/No-match: 0
+2026-11-16 23:57:22,019 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-16 23:57:51,652 | === File Organizer LIVE RUN ===
+2026-11-16 23:57:51,652 | Source: C:\path\to\folder
+2026-11-16 23:57:51,652 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 23:57:51,652 | Interactive mode: ON
+2026-11-16 23:57:51,653 | Source folder does not exist: C:\path\to\folder
+2026-11-16 23:57:51,653 | Done. Moved: 0, Skipped/No-match: 0
+2026-11-16 23:58:30,312 | === File Organizer DRY RUN ===
+2026-11-16 23:58:30,313 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-16 23:58:30,313 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-16 23:58:30,313 | Interactive mode: ON
+2026-11-16 23:58:37,875 | Added .pdf to skip list
+2026-11-16 23:58:38,618 | Added .jpg to skip list
+2026-11-16 23:58:39,254 | Added .py to skip list
+2026-11-16 23:58:39,791 | Added .xyz to skip list
+2026-11-16 23:58:39,791 | Done. Moved: 0, Skipped/No-match: 4
+2026-11-16 23:58:39,792 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-17 00:03:52,698 | === File Organizer DRY RUN ===
+2026-11-17 00:03:52,699 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-17 00:03:52,699 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-17 00:03:52,699 | Interactive mode: ON
+2026-11-17 00:03:52,702 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf -> C:\Users\Earl\Documents\Sorted\document (1).pdf [Documents]
+2026-11-17 00:03:52,702 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\photo.jpg -> C:\Users\Earl\Pictures\Sorted\photo (1).jpg [Images]
+2026-11-17 00:03:52,702 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\script.py -> C:\Users\Earl\Documents\Code\script (1).py [Code]
+2026-11-17 00:04:01,798 | Created new category 'Unknown' with extension .xyz -> C:\Users\Earl
+2026-11-17 00:04:01,798 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\unknown.xyz -> C:\Users\Earl\unknown.xyz [Unknown]
+2026-11-17 00:04:01,798 | Done. Moved: 4, Skipped/No-match: 0
+2026-11-17 00:04:01,798 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-17 00:04:57,736 | === File Organizer DRY RUN ===
+2026-11-17 00:04:57,736 | Source: C:\path\to\folder
+2026-11-17 00:04:57,736 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-17 00:04:57,736 | Interactive mode: ON
+2026-11-17 00:04:57,738 | Source folder does not exist: C:\path\to\folder
+2026-11-17 00:04:57,738 | Done. Moved: 0, Skipped/No-match: 0
+2026-11-17 00:04:57,738 | This was a dry run. No files were moved. Run without --dry-run to execute.
+2026-11-17 00:05:31,063 | === File Organizer DRY RUN ===
+2026-11-17 00:05:31,063 | Source: C:\Python Projects\file-organizer\FilePilot\test_messy
+2026-11-17 00:05:31,063 | Config: C:\Python Projects\file-organizer\FilePilot\config.json
+2026-11-17 00:05:31,063 | Interactive mode: ON
+2026-11-17 00:05:31,064 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\document.pdf -> C:\Users\Earl\Documents\Sorted\document (1).pdf [Documents]
+2026-11-17 00:05:31,065 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\photo.jpg -> C:\Users\Earl\Pictures\Sorted\photo (1).jpg [Images]
+2026-11-17 00:05:31,065 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\script.py -> C:\Users\Earl\Documents\Code\script (1).py [Code]
+2026-11-17 00:05:37,714 | Created new category 'Unknown' with extension .xyz -> C:\Users\Earl
+2026-11-17 00:05:37,714 | Would move: C:\Python Projects\file-organizer\FilePilot\test_messy\unknown.xyz -> C:\Users\Earl\unknown.xyz [Unknown]
+2026-11-17 00:05:37,715 | Done. Moved: 4, Skipped/No-match: 0
+2026-11-17 00:05:37,715 | This was a dry run. No files were moved. Run without --dry-run to execute.
