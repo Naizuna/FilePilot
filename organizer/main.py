@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
+import re
 import shutil
 import sys
 from datetime import datetime
@@ -40,7 +42,7 @@ def load_default_config() -> dict[str, Any]:
                 return json.load(f)
         except (json.JSONDecodeError, OSError):
             pass
-    return {"categories": {}, "keyword_rules": {}, "skip_extensions": [], "skip_folders": True}
+    return {"categories": {}, "keyword_rules": {}, "ai_categorization": {}, "skip_extensions": [], "skip_folders": True}
 
 
 def load_config(config_path: Path) -> dict[str, Any]:
@@ -61,6 +63,8 @@ def load_config(config_path: Path) -> dict[str, Any]:
             config["categories"] = {**config.get("categories", {}), **user_config["categories"]}
         if "keyword_rules" in user_config:
             config["keyword_rules"] = {**config.get("keyword_rules", {}), **user_config["keyword_rules"]}
+        if "ai_categorization" in user_config:
+            config["ai_categorization"] = {**config.get("ai_categorization", {}), **user_config["ai_categorization"]}
         if "skip_extensions" in user_config:
             # Combine, avoiding duplicates
             default_skips = set(config.get("skip_extensions", []))
@@ -85,8 +89,12 @@ def save_config(config_path: Path, config: dict[str, Any]) -> None:
 
 
 def expand_path(path_str: str) -> Path:
-    """Expand ~ and environment variables, return absolute Path."""
-    return Path(path_str).expanduser().resolve()
+    """Expand ~ and environment variables, return absolute Path.
+
+    Uses .absolute() instead of .resolve() to avoid following symlinks,
+    preventing potential directory traversal via symlink attacks.
+    """
+    return Path(path_str).expanduser().absolute()
 
 
 def build_extension_map(categories: dict[str, Any]) -> dict[str, tuple[str, Path]]:
@@ -120,6 +128,288 @@ def match_keyword_rules(filename: str, keyword_rules: dict[str, str], categories
                 dest = expand_path(categories[category]["destination"])
                 return category, dest
     return None
+
+
+# ===== AI Categorization (Privacy-First) =====
+
+# PII patterns to redact before sending to AI
+PII_PATTERNS = [
+    (r'\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b', '[CREDIT_CARD]'),
+    (r'\b\d{3}-\d{2}-\d{4}\b', '[SSN]'),
+    (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[EMAIL]'),
+    (r'\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b', '[PHONE]'),
+    (r'password\s*[:=]\s*\S+', 'password=[REDACTED]', re.IGNORECASE),
+    (r'api[_-]?key\s*[:=]\s*\S+', 'api_key=[REDACTED]', re.IGNORECASE),
+    (r'secret\s*[:=]\s*\S+', 'secret=[REDACTED]', re.IGNORECASE),
+    (r'token\s*[:=]\s*\S+', 'token=[REDACTED]', re.IGNORECASE),
+]
+
+
+def redact_pii(text: str) -> str:
+    """Redact PII from text before sending to AI."""
+    import re
+    result = text
+    for pattern, replacement in PII_PATTERNS:
+        if isinstance(pattern, str):
+            result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+        else:
+            result = pattern.sub(replacement, result)
+    return result
+
+
+def extract_text_from_file(file_path: Path, max_chars: int = 5000) -> str | None:
+    """Extract text content from file for AI categorization.
+
+    Supports: .txt, .md, .pdf, .docx
+    Returns None if extraction fails or file too large.
+    """
+    ext = file_path.suffix.lower()
+
+    try:
+        if ext in ('.txt', '.md', '.py', '.js', '.json', '.xml', '.yaml', '.yml', '.csv', '.log'):
+            # Plain text files
+            content = file_path.read_text(encoding='utf-8', errors='ignore')
+            return content[:max_chars]
+
+        elif ext == '.pdf':
+            # PDF - try to extract text
+            try:
+                import fitz  # PyMuPDF
+                doc = fitz.open(file_path)
+                text = ""
+                for page in doc:
+                    text += page.get_text()
+                    if len(text) > max_chars:
+                        break
+                doc.close()
+                return text[:max_chars]
+            except ImportError:
+                logger = logging.getLogger("organizer")
+                logger.warning("PyMuPDF not installed, cannot extract PDF text")
+                return None
+            except Exception as e:
+                logger = logging.getLogger("organizer")
+                logger.warning(f"Failed to extract PDF text: {e}")
+                return None
+
+        elif ext == '.docx':
+            # Word documents
+            try:
+                from docx import Document
+                doc = Document(file_path)
+                text = "\n".join([p.text for p in doc.paragraphs])
+                return text[:max_chars]
+            except ImportError:
+                logger = logging.getLogger("organizer")
+                logger.warning("python-docx not installed, cannot extract DOCX text")
+                return None
+            except Exception as e:
+                logger = logging.getLogger("organizer")
+                logger.warning(f"Failed to extract DOCX text: {e}")
+                return None
+
+    except Exception as e:
+        logger = logging.getLogger("organizer")
+        logger.warning(f"Failed to extract text from {file_path}: {e}")
+
+    return None
+
+
+def build_ai_prompt(categories: dict[str, Any], filename: str, content: str) -> str:
+    """Build the prompt for AI categorization."""
+    cat_list = [name for name in categories.keys() if not name.startswith("_") and isinstance(categories[name], dict) and "destination" in categories[name]]
+
+    # Redact filename to prevent PII leakage (e.g., "john_doe_tax_return.pdf")
+    safe_filename = redact_pii(filename)
+
+    prompt = f"""Categorize this file into ONE of these categories: {', '.join(cat_list)}
+
+File name: {safe_filename}
+Content preview:
+{content}
+
+Rules:
+- Return ONLY the category name, nothing else
+- Must be exactly one of: {', '.join(cat_list)}
+- If uncertain, pick the closest match
+"""
+    return prompt
+
+
+def categorize_with_local_ai(prompt: str, model: str = "llama3.2:3b") -> str | None:
+    """Call local Ollama API for categorization. No data leaves the machine."""
+    try:
+        import urllib.request
+        import json
+
+        url = "http://localhost:11434/api/generate"
+        data = {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": 0.1, "num_predict": 50}
+        }
+
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(data).encode('utf-8'),
+            headers={'Content-Type': 'application/json'}
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            category = result.get('response', '').strip()
+            return category if category else None
+
+    except urllib.error.ConnectionRefusedError:
+        logger = logging.getLogger("organizer")
+        logger.error("Ollama not running. Start with: ollama serve")
+        return None
+    except urllib.error.URLError as e:
+        logger = logging.getLogger("organizer")
+        logger.error(f"Ollama connection failed: {e}")
+        return None
+    except Exception as e:
+        logger = logging.getLogger("organizer")
+        logger.error(f"Local AI categorization failed: {e}")
+        return None
+
+
+def categorize_with_cloud_ai(prompt: str, provider: str, model: str, api_key: str) -> str | None:
+    """Call cloud AI API (OpenAI/Anthropic). Only if user explicitly enables."""
+    logger = logging.getLogger("organizer")
+    logger.warning(f"Using cloud AI ({provider}) - file content will be sent to external API")
+
+    try:
+        import urllib.request
+        import json
+
+        if provider == "openai":
+            url = "https://api.openai.com/v1/chat/completions"
+            headers = {
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            }
+            data = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "You are a file categorization assistant. Return only the category name."},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 50,
+                "temperature": 0.1
+            }
+        elif provider == "anthropic":
+            url = "https://api.anthropic.com/v1/messages"
+            headers = {
+                'x-api-key': api_key,
+                'Content-Type': 'application/json',
+                'anthropic-version': '2023-06-01'
+            }
+            data = {
+                "model": model,
+                "max_tokens": 50,
+                "temperature": 0.1,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ]
+            }
+        else:
+            logger.error(f"Unknown AI provider: {provider}")
+            return None
+
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(data).encode('utf-8'),
+            headers=headers
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as response:
+            result = json.loads(response.read().decode('utf-8'))
+
+            if provider == "openai":
+                category = result['choices'][0]['message']['content'].strip()
+            elif provider == "anthropic":
+                category = result['content'][0]['text'].strip()
+            else:
+                return None
+
+            return category if category else None
+
+    except urllib.error.HTTPError as e:
+        logger.error(f"Cloud AI API error: {e.code} - {e.read().decode()}")
+        return None
+    except Exception as e:
+        logger.error(f"Cloud AI categorization failed: {e}")
+        return None
+
+
+def categorize_with_ai(
+    file_path: Path,
+    categories: dict[str, Any],
+    ai_config: dict[str, Any],
+    logger: logging.Logger
+) -> tuple[str, Path] | None:
+    """Categorize file using AI with privacy safeguards.
+
+    Returns (category, destination) or None if AI unavailable/disabled.
+    """
+    # Check if AI categorization is enabled
+    if not ai_config.get("enabled", False):
+        return None
+
+    # Check file extension allowlist
+    allowed_exts = ai_config.get("allowed_extensions", [".txt", ".md", ".pdf", ".docx"])
+    if file_path.suffix.lower() not in allowed_exts:
+        return None
+
+    # Check file size limit
+    max_size_kb = ai_config.get("max_file_size_kb", 50)
+    if file_path.stat().st_size > max_size_kb * 1024:
+        logger.debug(f"File too large for AI: {file_path.name} ({file_path.stat().st_size} bytes)")
+        return None
+
+    # Extract text content
+    content = extract_text_from_file(file_path, max_chars=ai_config.get("max_chars", 5000))
+    if not content or len(content.strip()) < 10:
+        return None
+
+    # Redact PII
+    content = redact_pii(content)
+
+    # Build prompt
+    prompt = build_ai_prompt(categories, file_path.name, content)
+
+    # Determine provider
+    provider = ai_config.get("provider", "local")
+    model = ai_config.get("model", "llama3.2:3b" if provider == "local" else "gpt-4o-mini")
+
+    category = None
+    if provider == "local":
+        category = categorize_with_local_ai(prompt, model)
+    elif provider in ("openai", "anthropic"):
+        # API key MUST come from environment variable
+        api_key_env = ai_config.get("api_key_env", "OPENAI_API_KEY" if provider == "openai" else "ANTHROPIC_API_KEY")
+        api_key = os.environ.get(api_key_env)
+        if not api_key:
+            logger.error(f"AI enabled but {api_key_env} environment variable not set")
+            return None
+        category = categorize_with_cloud_ai(prompt, provider, model, api_key)
+    else:
+        logger.error(f"Unknown AI provider: {provider}")
+        return None
+
+    if not category:
+        return None
+
+    # Validate category exists in config
+    if category not in categories:
+        logger.warning(f"AI returned unknown category: {category}")
+        return None
+
+    dest = expand_path(categories[category]["destination"])
+    logger.info(f"AI categorized '{file_path.name}' as '{category}' (provider: {provider})")
+    return category, dest
 
 
 def get_unique_destination(dest_dir: Path, filename: str) -> Path:
@@ -254,6 +544,7 @@ def organize_file(
     categories: dict[str, Any] | None = None,
     config_path: Path | None = None,
     keyword_rules: dict[str, str] | None = None,
+    ai_config: dict[str, Any] | None = None,
 ) -> bool:
     """Move a single file to its category folder. Returns True if moved."""
     ext = file_path.suffix.lower()
@@ -263,39 +554,39 @@ def organize_file(
         logger.debug(f"Skipping file without extension: {file_path.name}")
         return False
 
-    # Check keyword rules first (higher priority than extension)
-    if keyword_rules and categories:
+    # Priority 1: Keyword rules (check if explicitly provided, not just truthy)
+    if keyword_rules is not None and categories:
         keyword_match = match_keyword_rules(file_path.name, keyword_rules, categories)
         if keyword_match:
             category, dest_dir = keyword_match
         else:
-            # Fall back to extension matching
+            # No keyword match - fall through to AI/extension/interactive
+            pass
+    else:
+        # No keyword rules provided - fall through to AI/extension/interactive
+        pass
+
+    # Priority 2: AI categorization (if enabled)
+    if 'category' not in locals():
+        ai_match = None
+        if ai_config and categories:
+            ai_match = categorize_with_ai(file_path, categories, ai_config, logger)
+
+        if ai_match:
+            category, dest_dir = ai_match
+        else:
+            # Priority 3: Extension matching
             if ext not in ext_map:
+                # Priority 4: Interactive prompt
                 if interactive and categories is not None and config_path is not None:
-                    # Prompt user for category
                     result = prompt_for_category(ext, categories, config_path, logger)
                     if result is None:
                         return False  # User chose to skip
                     cat_name, dest_dir = result
-                    # Rebuild ext_map with new extension
                     ext_map[ext] = (cat_name, dest_dir)
                 else:
                     return False
             category, dest_dir = ext_map[ext]
-    else:
-        # No keyword rules, use extension matching
-        if ext not in ext_map:
-            if interactive and categories is not None and config_path is not None:
-                # Prompt user for category
-                result = prompt_for_category(ext, categories, config_path, logger)
-                if result is None:
-                    return False  # User chose to skip
-                cat_name, dest_dir = result
-                # Rebuild ext_map with new extension
-                ext_map[ext] = (cat_name, dest_dir)
-            else:
-                return False
-        category, dest_dir = ext_map[ext]
 
     # Ensure destination directory exists
     if not dry_run:
@@ -323,10 +614,12 @@ def run_organizer(
     dry_run: bool = False,
     interactive: bool = False,
     config_path: Path | None = None,
+    use_ai: bool = False,
 ) -> tuple[int, int]:
     """Organize files in source folder according to config. Returns (moved_count, skipped_count)."""
     categories = config.get("categories", {})
     keyword_rules = config.get("keyword_rules", {})
+    ai_config = config.get("ai_categorization", {})
     skip_extensions = config.get("skip_extensions", [])
     skip_folders = config.get("skip_folders", True)
 
@@ -350,7 +643,8 @@ def run_organizer(
 
         if organize_file(
             file_path, ext_map, logger, dry_run,
-            interactive, categories, config_path, keyword_rules
+            interactive, categories, config_path, keyword_rules,
+            ai_config if use_ai else None
         ):
             moved += 1
         else:
@@ -398,6 +692,16 @@ Examples:
         "--undo",
         action="store_true",
         help="Undo the last organization run by reading organizer_log.txt",
+    )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Launch graphical interface",
+    )
+    parser.add_argument(
+        "--ai-categorize",
+        action="store_true",
+        help="Enable AI categorization for ambiguous files (requires config)",
     )
     return parser.parse_args()
 
@@ -464,9 +768,276 @@ def undo_organizer(log_file: Path, logger: logging.Logger, dry_run: bool = False
     return undone, failed
 
 
+def run_gui() -> int:
+    """Launch the GUI interface."""
+    try:
+        import tkinter as tk
+        from tkinter import filedialog, messagebox, ttk
+    except ImportError:
+        print("tkinter not available. Install python3-tk (Linux) or use standard Python (Windows/Mac).")
+        return 1
+
+    class OrganizerGUI:
+        def __init__(self, root):
+            self.root = root
+            self.root.title("File Organizer")
+            self.root.geometry("600x500")
+            self.root.minsize(500, 400)
+
+            # Variables
+            self.source_var = tk.StringVar()
+            self.config_var = tk.StringVar(value="config.json")
+            self.dry_run_var = tk.BooleanVar(value=True)
+            self.interactive_var = tk.BooleanVar(value=False)
+            self.undo_var = tk.BooleanVar(value=False)
+
+            self.build_ui()
+
+        def build_ui(self):
+            # Main frame with padding
+            main_frame = ttk.Frame(self.root, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+
+            # Source folder
+            ttk.Label(main_frame, text="Source Folder:").grid(row=0, column=0, sticky=tk.W, pady=5)
+            source_frame = ttk.Frame(main_frame)
+            source_frame.grid(row=0, column=1, sticky=tk.EW, pady=5)
+            main_frame.columnconfigure(1, weight=1)
+
+            ttk.Entry(source_frame, textvariable=self.source_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
+            ttk.Button(source_frame, text="Browse...", command=self.browse_source).pack(side=tk.LEFT, padx=(5, 0))
+
+            # Config file
+            ttk.Label(main_frame, text="Config File:").grid(row=1, column=0, sticky=tk.W, pady=5)
+            config_frame = ttk.Frame(main_frame)
+            config_frame.grid(row=1, column=1, sticky=tk.EW, pady=5)
+
+            ttk.Entry(config_frame, textvariable=self.config_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
+            ttk.Button(config_frame, text="Browse...", command=self.browse_config).pack(side=tk.LEFT, padx=(5, 0))
+
+            # Options frame
+            options_frame = ttk.LabelFrame(main_frame, text="Options", padding="10")
+            options_frame.grid(row=2, column=0, columnspan=2, sticky=tk.EW, pady=10)
+
+            ttk.Checkbutton(options_frame, text="Dry Run (preview only)", variable=self.dry_run_var).pack(anchor=tk.W, pady=2)
+            ttk.Checkbutton(options_frame, text="Interactive (prompt for unknown extensions)", variable=self.interactive_var).pack(anchor=tk.W, pady=2)
+            ttk.Checkbutton(options_frame, text="Undo last run", variable=self.undo_var, command=self.toggle_undo).pack(anchor=tk.W, pady=2)
+
+            # Run button
+            button_frame = ttk.Frame(main_frame)
+            button_frame.grid(row=3, column=0, columnspan=2, pady=10)
+            ttk.Button(button_frame, text="Run Organizer", command=self.run_organizer, style="Accent.TButton").pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame, text="View Log", command=self.view_log).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame, text="Open Config", command=self.open_config).pack(side=tk.LEFT, padx=5)
+
+            # Output log
+            ttk.Label(main_frame, text="Output:").grid(row=4, column=0, sticky=tk.NW, pady=(10, 5))
+            log_frame = ttk.Frame(main_frame)
+            log_frame.grid(row=5, column=0, columnspan=2, sticky=tk.NSEW, pady=5)
+            main_frame.rowconfigure(5, weight=1)
+
+            self.log_text = tk.Text(log_frame, height=15, wrap=tk.WORD, state=tk.DISABLED)
+            scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.log_text.yview)
+            self.log_text.configure(yscrollcommand=scrollbar.set)
+            self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+            # Status bar
+            self.status_var = tk.StringVar(value="Ready")
+            ttk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W).pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=5)
+
+        def toggle_undo(self):
+            if self.undo_var.get():
+                self.dry_run_var.set(False)
+                self.interactive_var.set(False)
+                self.source_var.set("")  # Not needed for undo
+
+        def browse_source(self):
+            folder = filedialog.askdirectory(title="Select Source Folder")
+            if folder:
+                self.source_var.set(folder)
+
+        def browse_config(self):
+            file = filedialog.askopenfilename(title="Select Config File", filetypes=[("JSON files", "*.json"), ("All files", "*.*")])
+            if file:
+                self.config_var.set(file)
+
+        def log(self, message):
+            self.log_text.config(state=tk.NORMAL)
+            self.log_text.insert(tk.END, message + "\n")
+            self.log_text.see(tk.END)
+            self.log_text.config(state=tk.DISABLED)
+
+        def run_organizer(self):
+            if self.undo_var.get():
+                self.run_undo()
+            else:
+                self.run_normal()
+
+        def run_normal(self):
+            source = self.source_var.get().strip()
+            if not source:
+                messagebox.showerror("Error", "Please select a source folder")
+                return
+
+            config = self.config_var.get().strip()
+            if not config:
+                messagebox.showerror("Error", "Please select a config file")
+                return
+
+            self.status_var.set("Running...")
+            self.log(f"=== File Organizer {'DRY RUN' if self.dry_run_var.get() else 'LIVE RUN'} ===")
+            self.log(f"Source: {source}")
+            self.log(f"Config: {config}")
+
+            # Run in thread to keep UI responsive
+            import threading
+            thread = threading.Thread(target=self._run_organizer_thread, args=(source, config))
+            thread.daemon = True
+            thread.start()
+
+        def _run_organizer_thread(self, source, config):
+            try:
+                # Import here to avoid circular imports
+                import sys
+                sys.path.insert(0, str(Path(__file__).parent))
+                from main import run_organizer, load_config, setup_logging, expand_path
+
+                config_path = Path(config).expanduser().resolve()
+                cfg = load_config(config_path)
+                source_path = expand_path(source)
+                log_file = Path("organizer_log.txt").resolve()
+
+                # Capture logger output
+                class GUILogger:
+                    def __init__(self, gui):
+                        self.gui = gui
+                    def info(self, msg):
+                        self.gui.root.after(0, lambda: self.gui.log(msg))
+                    def error(self, msg):
+                        self.gui.root.after(0, lambda: self.gui.log(f"ERROR: {msg}"))
+                    def warning(self, msg):
+                        self.gui.root.after(0, lambda: self.gui.log(f"WARNING: {msg}"))
+
+                logger = GUILogger(self)
+
+                moved, skipped = run_organizer(
+                    source_path, cfg, logger,
+                    self.dry_run_var.get(),
+                    self.interactive_var.get(),
+                    config_path
+                )
+
+                self.root.after(0, lambda: self._run_complete(moved, skipped))
+            except Exception as e:
+                self.root.after(0, lambda: self._run_error(str(e)))
+
+        def _run_complete(self, moved, skipped):
+            self.status_var.set("Done")
+            self.log(f"Done. Moved: {moved}, Skipped/No-match: {skipped}")
+            if self.dry_run_var.get():
+                self.log("This was a dry run. No files were moved. Uncheck 'Dry Run' to execute.")
+
+        def _run_error(self, error):
+            self.status_var.set("Error")
+            self.log(f"ERROR: {error}")
+            messagebox.showerror("Error", error)
+
+        def run_undo(self):
+            config = self.config_var.get().strip()
+            if not config:
+                messagebox.showerror("Error", "Please select a config file")
+                return
+
+            self.status_var.set("Undoing...")
+            self.log("=== File Organizer UNDO ===")
+            self.log(f"Config: {config}")
+
+            import threading
+            thread = threading.Thread(target=self._run_undo_thread, args=(config,))
+            thread.daemon = True
+            thread.start()
+
+        def _run_undo_thread(self, config):
+            try:
+                import sys
+                sys.path.insert(0, str(Path(__file__).parent))
+                from main import undo_organizer, load_config
+                from pathlib import Path
+
+                config_path = Path(config).expanduser().resolve()
+                cfg = load_config(config_path)
+                log_file = Path("organizer_log.txt").resolve()
+
+                class GUILogger:
+                    def __init__(self, gui):
+                        self.gui = gui
+                    def info(self, msg):
+                        self.gui.root.after(0, lambda: self.gui.log(msg))
+                    def error(self, msg):
+                        self.gui.root.after(0, lambda: self.gui.log(f"ERROR: {msg}"))
+                    def warning(self, msg):
+                        self.gui.root.after(0, lambda: self.gui.log(f"WARNING: {msg}"))
+
+                logger = GUILogger(self)
+
+                undone, failed = undo_organizer(log_file, logger, self.dry_run_var.get())
+
+                self.root.after(0, lambda: self._undo_complete(undone, failed))
+            except Exception as e:
+                self.root.after(0, lambda: self._run_error(str(e)))
+
+        def _undo_complete(self, undone, failed):
+            self.status_var.set("Done")
+            self.log(f"Done. Undone: {undone}, Failed: {failed}")
+            if self.dry_run_var.get():
+                self.log("This was a dry run. No files were moved. Uncheck 'Dry Run' to execute.")
+
+        def view_log(self):
+            log_file = Path("organizer_log.txt").resolve()
+            if log_file.exists():
+                import subprocess
+                import sys
+                if sys.platform == "win32":
+                    os.startfile(log_file)
+                elif sys.platform == "darwin":
+                    subprocess.run(["open", log_file])
+                else:
+                    subprocess.run(["xdg-open", log_file])
+            else:
+                messagebox.showinfo("Log", "No log file found yet. Run the organizer first.")
+
+        def open_config(self):
+            config = self.config_var.get().strip()
+            if config:
+                config_path = Path(config).expanduser().resolve()
+                if config_path.exists():
+                    import subprocess
+                    import sys
+                    if sys.platform == "win32":
+                        os.startfile(config_path)
+                    elif sys.platform == "darwin":
+                        subprocess.run(["open", config_path])
+                    else:
+                        subprocess.run(["xdg-open", config_path])
+                else:
+                    messagebox.showinfo("Config", f"Config file not found: {config_path}")
+            else:
+                messagebox.showinfo("Config", "No config file specified")
+
+    root = tk.Tk()
+    app = OrganizerGUI(root)
+    root.mainloop()
+    return 0
+
+
 def main() -> int:
     """Main entry point."""
     args = parse_args()
+
+    # Handle GUI command
+    if args.gui:
+        return run_gui()
 
     config_path = Path(args.config).expanduser().resolve()
     config = load_config(config_path)
@@ -503,7 +1074,7 @@ def main() -> int:
 
     moved, skipped = run_organizer(
         source, config, logger, args.dry_run,
-        args.interactive, config_path
+        args.interactive, config_path, args.ai_categorize
     )
 
     logger.info(f"Done. Moved: {moved}, Skipped/No-match: {skipped}")

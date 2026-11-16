@@ -1,2 +1,7 @@
-# Standard library only - no external dependencies required
+# Standard library only - no external dependencies required for core functionality
 # Python 3.9+
+
+# Optional dependencies for AI categorization:
+# pip install pymupdf python-docx
+# - pymupdf (fitz): PDF text extraction
+# - python-docx: DOCX text extraction

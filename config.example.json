@@ -52,6 +52,15 @@
     "music": "Audio",
     "song": "Audio"
   },
+  "ai_categorization": {
+    "enabled": false,
+    "provider": "local",
+    "model": "llama3.2:3b",
+    "api_key_env": "OPENAI_API_KEY",
+    "allowed_extensions": [".txt", ".md", ".pdf", ".docx"],
+    "max_file_size_kb": 50,
+    "max_chars": 5000
+  },
   "skip_extensions": [".crdownload", ".part", ".tmp", ".download"],
   "skip_folders": true
 }
