@@ -1,4 +1,4 @@
-# File Organizer
+# File Pilot
 
 A Python tool that sorts a messy folder (like Downloads) into categorized folders. Rules and destinations live in a JSON config, so you can send each file type to any folder you want, even on another drive, without touching the code.
 
@@ -40,8 +40,8 @@ pip install pymupdf python-docx
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/file-organizer.git
-cd file-organizer
+git clone https://github.com/YOUR-USERNAME/file-pilot.git
+cd file-pilot
 python -m venv .venv
 
 # Windows
@@ -54,7 +54,7 @@ source .venv/bin/activate
 
 ### GUI (Easiest)
 
-Double-click `file-organizer-gui.exe` (in `dist/`) or run:
+Double-click `File Pilot GUI.exe` (in `dist/`) or run:
 
 ```bash
 python -m organizer.main --gui
@@ -182,8 +182,8 @@ In `dist/` after building:
 
 | File | Description |
 |------|-------------|
-| `file-organizer.exe` | CLI version |
-| `file-organizer-gui.exe` | GUI (double-click to open) |
+| `File Pilot.exe` | CLI version |
+| `File Pilot GUI.exe` | GUI (double-click to open) |
 
 ### Build Your Own
 
@@ -191,10 +191,12 @@ In `dist/` after building:
 pip install pyinstaller
 
 # CLI
-pyinstaller --onefile --name file-organizer --add-data "config.example.json;." organizer/main.py
+pyinstaller --onefile --name "File Pilot" --add-data "config.example.json;." organizer/main.py
 
 # GUI (double-click opens interface)
-pyinstaller --onefile --windowed --name file-organizer-gui \
+pyinstaller --onefile --windowed --name "File Pilot GUI" \
+  --icon=icon.ico \
+  --add-data "icon.ico;." \
   --add-data "config.example.json;." \
   --hidden-import=fitz --hidden-import=docx \
   --hidden-import=tkinter --hidden-import=tkinter.ttk \

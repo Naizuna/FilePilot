@@ -802,9 +802,16 @@ def run_gui() -> int:
     class OrganizerGUI:
         def __init__(self, root):
             self.root = root
-            self.root.title("File Organizer")
+            self.root.title("File Pilot")
             self.root.geometry("600x500")
             self.root.minsize(500, 400)
+
+            # Set window icon (works for .ico on Windows)
+            try:
+                icon_path = get_resource_path("icon.ico")
+                self.root.iconbitmap(str(icon_path))
+            except Exception:
+                pass  # Icon optional; don't crash if missing
 
             # Variables
             self.source_var = tk.StringVar()
@@ -931,26 +938,29 @@ def run_gui() -> int:
 
         def _run_organizer_thread(self, source, config):
             try:
-                # Import here to avoid circular imports
+                # Use functions directly from this module (already loaded)
                 import sys
-                sys.path.insert(0, str(Path(__file__).parent))
-                from main import run_organizer, load_config, setup_logging, expand_path
+                current_module = sys.modules[__name__]
+                run_organizer = current_module.run_organizer
+                load_config = current_module.load_config
+                expand_path = current_module.expand_path
 
                 config_path = Path(config).expanduser().resolve()
                 cfg = load_config(config_path)
                 source_path = expand_path(source)
-                log_file = Path("organizer_log.txt").resolve()
 
                 # Capture logger output
                 class GUILogger:
                     def __init__(self, gui):
                         self.gui = gui
                     def info(self, msg):
-                        self.gui.root.after(0, lambda: self.gui.log(msg))
+                        self.gui.root.after(0, lambda m=msg: self.gui.log(m))
                     def error(self, msg):
-                        self.gui.root.after(0, lambda: self.gui.log(f"ERROR: {msg}"))
+                        self.gui.root.after(0, lambda m=msg: self.gui.log(f"ERROR: {m}"))
                     def warning(self, msg):
-                        self.gui.root.after(0, lambda: self.gui.log(f"WARNING: {msg}"))
+                        self.gui.root.after(0, lambda m=msg: self.gui.log(f"WARNING: {m}"))
+                    def debug(self, msg):
+                        self.gui.root.after(0, lambda m=msg: self.gui.log(f"DEBUG: {m}"))
 
                 logger = GUILogger(self)
 
@@ -962,13 +972,14 @@ def run_gui() -> int:
                     self.ai_var.get()
                 )
 
-                self.root.after(0, lambda: self._run_complete(moved, skipped))
+                self.root.after(0, lambda m=moved, s=skipped: self._run_complete(m, s))
             except Exception as e:
-                self.root.after(0, lambda: self._run_error(str(e)))
+                self.root.after(0, lambda err=e: self._run_error(str(err)))
 
         def _run_complete(self, moved, skipped):
             self._running = False
-            self._run_button.config(state=tk.NORMAL)
+            if self._run_button:
+                self._run_button.config(state=tk.NORMAL)
             self.status_var.set("Done")
             self.log(f"Done. Moved: {moved}, Skipped/No-match: {skipped}")
             if self.dry_run_var.get():
@@ -976,7 +987,8 @@ def run_gui() -> int:
 
         def _run_error(self, error):
             self._running = False
-            self._run_button.config(state=tk.NORMAL)
+            if self._run_button:
+                self._run_button.config(state=tk.NORMAL)
             self.status_var.set("Error")
             self.log(f"ERROR: {error}")
             messagebox.showerror("Error", error)
@@ -999,8 +1011,9 @@ def run_gui() -> int:
         def _run_undo_thread(self, config):
             try:
                 import sys
-                sys.path.insert(0, str(Path(__file__).parent))
-                from main import undo_organizer, load_config
+                current_module = sys.modules[__name__]
+                undo_organizer = current_module.undo_organizer
+                load_config = current_module.load_config
                 from pathlib import Path
 
                 config_path = Path(config).expanduser().resolve()
@@ -1011,19 +1024,21 @@ def run_gui() -> int:
                     def __init__(self, gui):
                         self.gui = gui
                     def info(self, msg):
-                        self.gui.root.after(0, lambda: self.gui.log(msg))
+                        self.gui.root.after(0, lambda m=msg: self.gui.log(m))
                     def error(self, msg):
-                        self.gui.root.after(0, lambda: self.gui.log(f"ERROR: {msg}"))
+                        self.gui.root.after(0, lambda m=msg: self.gui.log(f"ERROR: {m}"))
                     def warning(self, msg):
-                        self.gui.root.after(0, lambda: self.gui.log(f"WARNING: {msg}"))
+                        self.gui.root.after(0, lambda m=msg: self.gui.log(f"WARNING: {m}"))
+                    def debug(self, msg):
+                        self.gui.root.after(0, lambda m=msg: self.gui.log(f"DEBUG: {m}"))
 
                 logger = GUILogger(self)
 
                 undone, failed = undo_organizer(log_file, logger, self.dry_run_var.get())
 
-                self.root.after(0, lambda: self._undo_complete(undone, failed))
+                self.root.after(0, lambda u=undone, f=failed: self._undo_complete(u, f))
             except Exception as e:
-                self.root.after(0, lambda: self._run_error(str(e)))
+                self.root.after(0, lambda err=e: self._run_error(str(err)))
 
         def _undo_complete(self, undone, failed):
             self.status_var.set("Done")
@@ -1071,14 +1086,18 @@ def run_gui() -> int:
 
 def main() -> int:
     """Main entry point."""
-    # Auto-launch GUI when frozen (double-clicked) with no args
-    if hasattr(sys, '_MEIPASS') and len(sys.argv) == 1:
-        return run_gui()
-
     args = parse_args()
 
-    # Handle GUI command
+    # Handle GUI command explicitly
     if args.gui:
+        return run_gui()
+
+    # Auto-launch GUI only for GUI exe (double-clicked) with no args
+    # Check executable name to distinguish CLI vs GUI exe
+    exe_name = Path(sys.argv[0]).stem.lower()
+    is_gui_exe = "gui" in exe_name
+
+    if hasattr(sys, '_MEIPASS') and len(sys.argv) == 1 and is_gui_exe:
         return run_gui()
 
     config_path = Path(args.config).expanduser().resolve()

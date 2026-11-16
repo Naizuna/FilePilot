@@ -1,5 +1,5 @@
-('C:\\Python '
- 'Projects\\file-organizer\\FilePilot\\build\\file-organizer-gui\\PYZ-00.pyz',
+('C:\\Python Projects\\file-organizer\\FilePilot\\build\\File '
+ 'Pilot\\PYZ-00.pyz',
  [('__future__',
    'C:\\Users\\Earl\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\__future__.py',
    'PYMODULE'),
